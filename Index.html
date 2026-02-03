@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chext Digital - Universal OS</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #0a0a0a; --accent: #00ff88; --creator-purp: #6e45e2; --text: #e0e0e0; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--primary); color: var(--text); overflow-x: hidden; }
+        .page { display: none; min-height: 100vh; width: 100vw; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        .active { display: flex; }
+        
+        /* UI Components */
+        .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; background: var(--accent); color: black; }
+        button:active { transform: scale(0.98); }
+        .tab-btn { background: #333; color: white; border-radius: 5px; padding: 10px; margin-right: 5px; width: auto; font-size: 12px; }
+        
+        /* Tables & Lists */
+        .list-item { background: #111; padding: 12px; border-radius: 8px; margin-top: 8px; border-left: 4px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
+        .badge { font-size: 10px; padding: 3px 8px; border-radius: 10px; background: var(--accent); color: black; }
+    </style>
+</head>
+<body>
+
+<div id="splashPage" class="page active" style="justify-content: center; align-items: center; text-align: center;">
+    <h1 style="font-size: 3rem; letter-spacing: 8px; margin: 0; color: var(--accent);">CHEXT DIGITAL</h1>
+    <p style="opacity: 0.5; margin-bottom: 30px;">Universal Workforce & Banking Intelligence</p>
+    <button style="width: 200px;" onclick="showPage('loginPage')">OPEN</button>
+</div>
+
+<div id="loginPage" class="page">
+    <div class="glass" style="max-width: 400px; margin: auto;">
+        <h2 style="text-align: center;">System Access</h2>
+        <input type="text" id="loginUser" placeholder="Username">
+        <input type="password" id="loginPass" placeholder="Password">
+        <button onclick="handleLogin()">LOGIN</button>
+        <p style="text-align: center; font-size: 14px; margin-top: 20px;">
+            New Admin? <span style="color:var(--accent); cursor:pointer;" onclick="showPage('adminRegPage')">Register Organization</span>
+        </p>
+    </div>
+</div>
+
+<div id="adminRegPage" class="page">
+    <h2>Register Organization</h2>
+    <div class="glass">
+        <input type="text" id="regOrgName" placeholder="Organization Name (e.g. Green Valley School)">
+        <input type="text" id="regAdminUser" placeholder="Choose Admin Username">
+        <input type="password" id="regAdminPass" placeholder="Choose Admin Password">
+        <button onclick="selfRegisterAdmin()">Complete Registration</button>
+        <button onclick="showPage('loginPage')" style="background:none; color:white;">Back to Login</button>
+    </div>
+</div>
+
+<div id="creatorDash" class="page" style="background: linear-gradient(135deg, #0a0a0a 0%, #1a002e 100%);">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+        <h2>God Mode: Rabi</h2>
+        <button onclick="logout()" style="width:80px; font-size:12px; background:red; color:white;">Logout</button>
+    </div>
+    
+    <div class="glass">
+        <h3>System Control Settings</h3>
+        <label>Inject Global Custom Code (Update all Platforms):</label>
+        <textarea id="creatorCodeInject" placeholder="// Paste JavaScript here to update all Admin & Worker views..."></textarea>
+        <button style="background:var(--creator-purp); color:white;" onclick="injectSystemCode()">Deploy Global Update</button>
+    </div>
+
+    <h3>Global Organizations List</h3>
+    <div id="globalOrgList"></div>
+</div>
+
+<div id="adminDash" class="page">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+        <h2 id="currentOrgTitle">Admin Panel</h2>
+        <button onclick="logout()" style="width:80px; font-size:12px; background:#444;">Logout</button>
+    </div>
+
+    <div style="display: flex; margin-bottom: 20px;">
+        <button class="tab-btn" onclick="showAdminTab('workers')">Workers</button>
+        <button class="tab-btn" onclick="showAdminTab('banking')">Banking</button>
+        <button class="tab-btn" onclick="showAdminTab('settings')">Settings</button>
+    </div>
+
+    <div id="tabWorkers" class="admin-tab">
+        <div class="glass">
+            <h4>Register New Worker</h4>
+            <input type="text" id="workerNameInput" placeholder="Worker Full Name">
+            <input type="text" id="workerRoleInput" placeholder="Role/Title">
+            <button onclick="addWorkerToOrg()">Register Worker</button>
+        </div>
+        <h3>Active Staff</h3>
+        <div id="workerListDisplay"></div>
+    </div>
+
+    <div id="tabBanking" class="admin-tab" style="display:none;">
+        <div class="glass">
+            <h4>Financial Progress</h4>
+            <canvas id="profitChart" height="200"></canvas>
+            <p id="profitCalculations" style="margin-top:15px;"></p>
+        </div>
+    </div>
+
+    <div id="tabSettings" class="admin-tab" style="display:none;">
+        <div class="glass">
+            <h4>Organization Settings</h4>
+            <label>Geofence Radius (Meters)</label>
+            <input type="number" id="orgRadius" value="500">
+            <label>Worker Hourly Rate ($)</label>
+            <input type="number" id="orgRate" value="25">
+            <button onclick="alert('Settings Saved!')">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- CORE DATABASE ---
+    let admins = JSON.parse(localStorage.getItem('chx_admins')) || [];
+    let workers = JSON.parse(localStorage.getItem('chx_workers')) || [];
+    let activeUser = null;
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    // --- AUTH LOGIC ---
+    function handleLogin() {
+        const u = document.getElementById('loginUser').value;
+        const p = document.getElementById('loginPass').value;
+
+        // 1. Creator Login
+        if (u === 'Rabi' && p === '3400') {
+            activeUser = { role: 'creator', user: 'Rabi' };
+            renderCreatorList();
+            showPage('creatorDash');
+        } 
+        // 2. Admin Login
+        else {
+            const admin = admins.find(a => a.user === u && a.pass === p);
+            if (admin) {
+                activeUser = { role: 'admin', ...admin };
+                document.getElementById('currentOrgTitle').innerText = admin.org;
+                showAdminTab('workers');
+                showPage('adminDash');
+            } else {
+                alert("Login Failed. Incorrect Credentials.");
+            }
+        }
+    }
+
+    // --- ADMIN REGISTRATION ---
+    function selfRegisterAdmin() {
+        const org = document.getElementById('regOrgName').value;
+        const user = document.getElementById('regAdminUser').value;
+        const pass = document.getElementById('regAdminPass').value;
+
+        if (org && user && pass) {
+            admins.push({ org, user, pass });
+            localStorage.setItem('chx_admins', JSON.stringify(admins));
+            alert("Organization Registered! You can now login.");
+            showPage('loginPage');
+        } else {
+            alert("Please fill all fields.");
+        }
+    }
+
+    // --- WORKER MANAGEMENT ---
+    function addWorkerToOrg() {
+        const name = document.getElementById('workerNameInput').value;
+        const role = document.getElementById('workerRoleInput').value;
+
+        if (name && role) {
+            workers.push({ name, role, org: activeUser.org, status: 'Active' });
+            localStorage.setItem('chx_workers', JSON.stringify(workers));
+            renderWorkerList();
+            document.getElementById('workerNameInput').value = '';
+            document.getElementById('workerRoleInput').value = '';
+        }
+    }
+
+    function renderWorkerList() {
+        const container = document.getElementById('workerListDisplay');
+        const myWorkers = workers.filter(w => w.org === activeUser.org);
+        container.innerHTML = myWorkers.map(w => `
+            <div class="list-item">
+                <div><strong>${w.name}</strong><br><small>${w.role}</small></div>
+                <div class="badge">${w.status}</div>
+            </div>
+        `).join('');
+    }
+
+    // --- CREATOR ACTIONS ---
+    function renderCreatorList() {
+        const container = document.getElementById('globalOrgList');
+        container.innerHTML = admins.map(a => `
+            <div class="list-item" style="border-left-color:var(--creator-purp)">
+                <div><strong>${a.org}</strong><br><small>Admin: ${a.user}</small></div>
+                <div>${workers.filter(w => w.org === a.org).length} Workers</div>
+            </div>
+        `).join('');
+    }
+
+    function injectSystemCode() {
+        const code = document.getElementById('creatorCodeInject').value;
+        try {
+            eval(code);
+            alert("Global System Update Successful.");
+        } catch(e) {
+            alert("Code Error: " + e.message);
+        }
+    }
+
+    // --- TAB LOGIC ---
+    function showAdminTab(tabName) {
+        document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
+        if (tabName === 'workers') {
+            document.getElementById('tabWorkers').style.display = 'block';
+            renderWorkerList();
+        } else if (tabName === 'banking') {
+            document.getElementById('tabBanking').style.display = 'block';
+            initChart();
+        } else if (tabName === 'settings') {
+            document.getElementById('tabSettings').style.display = 'block';
+        }
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('profitChart').getContext('2d');
+        const count = workers.filter(w => w.org === activeUser.org).length;
+        const cost = count * 2000; // Simulated labor cost
+        const revenue = count * 5000; // Simulated revenue
+        
+        document.getElementById('profitCalculations').innerHTML = `
+            Workers: ${count}<br>
+            Est. Revenue: $${revenue}<br>
+            Est. Labor Cost: $${cost}<br>
+            <strong>Net Profit: $${revenue - cost}</strong>
+        `;
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Revenue', 'Labor Cost', 'Profit'],
+                datasets: [{
+                    label: 'Financial Performance ($)',
+                    data: [revenue, cost, revenue - cost],
+                    backgroundColor: [varColor('--accent'), '#ff4444', '#3498db']
+                }]
+            },
+            options: { color: '#fff', scales: { y: { ticks: { color: '#fff' } } } }
+        });
+    }
+
+    function varColor(name) { return getComputedStyle(document.documentElement).getPropertyValue(name); }
+    function logout() { location.reload(); }
+</script>
+</body>
+</html>
